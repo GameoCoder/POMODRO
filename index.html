@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Tracker</title>
+
+  <!-- Hi-tech CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <h1>Study Tracker</h1>
+      <p id="status">Status: Not logged in</p>
+    </header>
+
+    <!-- Controls -->
+    <section class="controls">
+      <button id="loginBtn">Login</button>
+      <button id="startBtn">Start Study</button>
+      <button id="stopBtn">Stop Study</button>
+    </section>
+
+    <!-- Timer -->
+    <section class="timer-section">
+      <div id="timer">00:00</div>
+    </section>
+
+    <!-- Camera -->
+    <section class="camera-section">
+      <video id="video" autoplay muted></video>
+    </section>
+
+  </div>
+
+  <!-- Face API -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <!-- Your existing JS logic (UNCHANGED) -->
+  <script>
+    const API = "http://127.0.0.1:3000";
+
+    let token = null;
+
+    let seconds = 0;
+    let timerInterval = null;
+
+    let aiInterval = null;
+    let faceMissingSeconds = 0;
+    let studyStartedAt = 0;
+
+    let stream = null;
+
+    const timerEl = document.getElementById("timer");
+    const statusEl = document.getElementById("status");
+    const video = document.getElementById("video");
+
+    /* ===== TIMER ===== */
+    function startTimer() {
+      if (timerInterval) return;
+      timerInterval = setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
+        timerEl.textContent = `${m}:${s}`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    /* ===== CAMERA ===== */
+    async function startCamera() {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+    }
+
+    /* ===== AI ===== */
+    function startAI() {
+      faceapi.nets.tinyFaceDetector.loadFromUri("/models").then(() => {
+        aiInterval = setInterval(async () => {
+          if (video.readyState < 2) return;
+          if (Date.now() - studyStartedAt < 5000) return;
+
+          const detections = await faceapi.detectAllFaces(
+            video,
+            new faceapi.TinyFaceDetectorOptions({
+              inputSize: 224,
+              scoreThreshold: 0.6
+            })
+          );
+
+          if (detections.length === 0) {
+            faceMissingSeconds++;
+            statusEl.textContent = `Warning: Face missing (${faceMissingSeconds}s)`;
+            statusEl.className = "status-paused";
+
+            if (faceMissingSeconds >= 5) pauseByAI();
+          } else {
+            faceMissingSeconds = 0;
+            statusEl.textContent = "Status: Studying";
+            statusEl.className = "status-studying";
+          }
+        }, 1000);
+      });
+    }
+
+    function stopAI() {
+      clearInterval(aiInterval);
+      aiInterval = null;
+      faceMissingSeconds = 0;
+    }
+
+    async function pauseByAI() {
+      if (!timerInterval) return;
+
+      stopTimer();
+      stopAI();
+
+      await fetch(`${API}/sessions/pause`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      statusEl.textContent = "Status: Paused by AI";
+      statusEl.className = "status-paused";
+    }
+
+    /* ===== LOGIN ===== */
+    document.getElementById("loginBtn").onclick = async () => {
+      const res = await fetch(`${API}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "test@example.com",
+          password: "123456"
+        })
+      });
+
+      const data = await res.json();
+      token = data.token;
+
+      statusEl.textContent = "Status: Logged in";
+      statusEl.className = "";
+    };
+
+    /* ===== START ===== */
+    document.getElementById("startBtn").onclick = async () => {
+      if (!token) return alert("Login first");
+
+      await fetch(`${API}/sessions/start`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      seconds = 0;
+      faceMissingSeconds = 0;
+      studyStartedAt = Date.now();
+
+      timerEl.textContent = "00:00";
+
+      await startCamera();
+      startTimer();
+      startAI();
+
+      statusEl.textContent = "Status: Studying";
+      statusEl.className = "status-studying";
+    };
+
+    /* ===== STOP ===== */
+    document.getElementById("stopBtn").onclick = async () => {
+      if (!token) return;
+
+      await fetch(`${API}/sessions/stop`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      stopTimer();
+      stopAI();
+      stopCamera();
+
+      statusEl.textContent = "Status: Stopped";
+      statusEl.className = "status-stopped";
+    };
+  </script>
+
+</body>
+</html>

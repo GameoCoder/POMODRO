@@ -44,6 +44,10 @@
     const API = "http://127.0.0.1:3000";
 
     let token = null;
+    let isPausedByAI = false;
+    
+    let faceReturnSeconds = 0;
+
 
     let seconds = 0;
     let timerInterval = null;
@@ -88,55 +92,90 @@
     }
 
     /* ===== AI ===== */
-    function startAI() {
-      faceapi.nets.tinyFaceDetector.loadFromUri("/models").then(() => {
-        aiInterval = setInterval(async () => {
-          if (video.readyState < 2) return;
-          if (Date.now() - studyStartedAt < 5000) return;
+    async function startAI() {
+  await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
 
-          const detections = await faceapi.detectAllFaces(
-            video,
-            new faceapi.TinyFaceDetectorOptions({
-              inputSize: 224,
-              scoreThreshold: 0.6
-            })
-          );
+  aiInterval = setInterval(async () => {
+    if (video.readyState < 2) return;
 
-          if (detections.length === 0) {
-            faceMissingSeconds++;
-            statusEl.textContent = `Warning: Face missing (${faceMissingSeconds}s)`;
-            statusEl.className = "status-paused";
+    // Grace period after starting study
+    if (Date.now() - studyStartedAt < 5000) return;
 
-            if (faceMissingSeconds >= 5) pauseByAI();
-          } else {
-            faceMissingSeconds = 0;
-            statusEl.textContent = "Status: Studying";
-            statusEl.className = "status-studying";
-          }
-        }, 1000);
-      });
+    const detections = await faceapi.detectAllFaces(
+      video,
+      new faceapi.TinyFaceDetectorOptions({
+        scoreThreshold: 0.6
+      })
+    );
+
+    /* =============================
+       FACE NOT DETECTED
+    ============================= */
+    if (detections.length === 0) {
+      faceMissingSeconds++;
+      faceReturnSeconds = 0;
+
+      if (!isPausedByAI) {
+        statusEl.textContent = `Warning: Face missing (${faceMissingSeconds}s)`;
+      }
+
+      // Pause after 5s away
+      if (faceMissingSeconds >= 5 && !isPausedByAI) {
+        pauseByAI();
+      }
     }
+
+    /* =============================
+       FACE DETECTED
+    ============================= */
+    else {
+      faceMissingSeconds = 0;
+
+      if (isPausedByAI) {
+        faceReturnSeconds++;
+        statusEl.textContent = `Face detected. Resuming in ${2 - faceReturnSeconds}s`;
+
+        // Resume after 2s stable detection
+        if (faceReturnSeconds >= 2) {
+          resumeAfterAI();
+        }
+      } else {
+        statusEl.textContent = "Studying";
+      }
+    }
+  }, 1000);
+}
+
 
     function stopAI() {
       clearInterval(aiInterval);
       aiInterval = null;
       faceMissingSeconds = 0;
     }
+async function pauseByAI() {
+  if (isPausedByAI) return;
 
-    async function pauseByAI() {
-      if (!timerInterval) return;
+  isPausedByAI = true;
+  stopTimer();
 
-      stopTimer();
-      stopAI();
+  await fetch(`${API}/sessions/pause`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-      await fetch(`${API}/sessions/pause`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
+  statusEl.textContent = "Paused (away)";
+}
+function resumeAfterAI() {
+  if (!isPausedByAI) return;
 
-      statusEl.textContent = "Status: Paused by AI";
-      statusEl.className = "status-paused";
-    }
+  isPausedByAI = false;
+  faceReturnSeconds = 0;
+
+  startTimer();
+
+  statusEl.textContent = "Studying";
+}
+
 
     /* ===== LOGIN ===== */
     document.getElementById("loginBtn").onclick = async () => {
@@ -164,10 +203,12 @@
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      seconds = 0;
-      faceMissingSeconds = 0;
-      studyStartedAt = Date.now();
+// 🔁 RESET ALL STATE
+  seconds = 0;
+  faceMissingSeconds = 0;
+  faceReturnSeconds = 0;
+  isPausedByAI = false;
+  studyStartedAt = Date.now();
 
       timerEl.textContent = "00:00";
 

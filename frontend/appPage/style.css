@@ -1,0 +1,104 @@
+* {
+  box-sizing: border-box;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb') no-repeat center center/cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+/* Dark overlay */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+}
+
+/* Top Clock */
+.top-clock {
+  position: absolute;
+  top: 30px;
+  right: 40px;
+  font-size: 24px;
+  letter-spacing: 1px;
+}
+
+/* Glass Card */
+.pomodoro-card {
+  position: relative;
+  width: 420px;
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  text-align: center;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-weight: 500;
+}
+
+#status {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* Tabs */
+.tabs {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.tab {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Timer */
+.timer-display {
+  font-size: 60px;
+  margin: 20px 0;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+button:hover {
+  background: rgba(255,255,255,0.3);
+}

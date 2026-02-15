@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+     <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+</head>
+<body>
+    <div>
+        <h1>LOGIN</h1>
+        <!-- Email -->
+    <form id="login-form">
+        <div class="em">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope-fill" viewBox="0 0 16 16">
+  <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414zM0 4.697v7.104l5.803-3.558zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586zm3.436-.586L16 11.801V4.697z"/>
+</svg>
+            <input type="email" id="em" required>
+            <label>Email</label>
+        </div>
+        <!-- Password -->
+        <div class="pass">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-circle-fill" viewBox="0 0 16 16">
+  <circle cx="8" cy="8" r="8"/>
+</svg>
+            <input type="password" id="pass" required>
+            <label>Password</label>
+        </div>
+        <div class="rem">
+            <input type="checkbox" id="agree">
+            <label for="agree">Remember Me</label>
+
+        </div>
+        <div class="log">
+            <button id="login" type="submit">Login</button>
+        </div>
+    </form>
+    
+        <div class="forgot">
+
+            
+            <a href="signup.html">Don't have an account </a>
+        </div>
+        <div>
+            <p id="status"></p>
+        </div>
+
+    </div>
+    
+    <script src="prac.js" type="module" defer></script>
+</body>
+</html>

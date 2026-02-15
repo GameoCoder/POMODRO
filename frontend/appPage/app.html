@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Study Tracker</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="top-clock" id="liveClock"></div>
+
+    <div class="pomodoro-card">
+      <div class="card-header">
+        <h2>Pomodoro</h2>
+        <span id="status">Not logged in</span>
+      </div>
+<!-- vghfh -->
+      <div class="tabs">
+        <button class="tab active">Focus</button>
+        <button class="tab">Short Break</button>
+        <button class="tab">Long Break</button>
+      </div>
+
+      <div class="timer-display" id="timer">00:00</div>
+
+      <div class="controls">
+        <button id="loginBtn" onclick="window.location.href = '../loginPage/login.html'">
+          Login
+        </button>
+        <button id="startBtn">Start</button>
+        <button id="stopBtn">Stop</button>
+      </div>
+    </div>
+
+    <video
+      id="video"
+      autoplay
+      muted
+      style="
+        position: fixed;
+        top: -10000px;
+        left: -10000px;
+        width: 1px;
+        height: 1px;
+      "
+    ></video>
+
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+      setInterval(() => {
+        const now = new Date();
+        document.getElementById("liveClock").innerText =
+          now.toLocaleTimeString();
+      }, 1000);
+    </script>
+  </body>
+</html>
